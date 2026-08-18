@@ -82,13 +82,41 @@ function controlDate() {
 /** API 응답 항목에서 필요한 필드만 추립니다. */
 function simplify(x) {
   return {
-    movNm: x.movNm || x.movieNm || "",          // 영화명
-    scnsNm: x.scnsNm || x.screenNm || "",       // 상영관명
-    scnStrtTm: x.scnStrtTm || x.playStartTm || "", // 시작시각
-    tcscnsGradCd: x.tcscnsGradCd || "",         // 특별관 등급코드
-    rmnSeatCnt: x.rmnSeatCnt ?? x.remainSeatCnt ?? null, // 잔여좌석
+    movNm: x.movNm || x.movieNm || "",              // 영화명
+    scnsNm: x.scnsNm || x.screenNm || "",           // 상영관명
+    scnStrtTm: x.rlMovStartTm || x.scnStrtTm || "", // 시작시각 (실제 필드: rlMovStartTm)
+    tcscnsGradCd: x.tcscnsGradCd || "",             // 특별관 등급코드
+    scnsGradCd: x.scnsGradCd || "",                 // 상영관 등급코드 (네 자리)
+    rmnSeatCnt: x.frtmpSeatCnt ?? x.rmnSeatCnt ?? null, // 잔여좌석 (실제 필드: frtmpSeatCnt)
   };
 }
+
+② IMAX 판별을 상영관 이름 기준으로 변경
+
+찾을 부분:
+
+javascript
+    const imax = movie.filter((x) => x.tcscnsGradCd === IMAX_GRADE_CODE);
+
+바꿀 내용:
+
+javascript
+    // 등급코드는 극장마다 값이 달라서, 상영관 이름에 IMAX가 들어있는지로 판별합니다.
+    // 이름 기준이 코드 기준보다 오해의 소지가 적습니다.
+    const imax = movie.filter(
+      (x) => norm(x.scnsNm).includes("IMAX") || x.tcscnsGradCd === IMAX_GRADE_CODE
+    );
+
+    // 이 극장에서 IMAX가 어떤 코드를 쓰는지 로그로 확인 (한 번 파악되면 이 줄은 지워도 됩니다)
+    const imaxAll = items.filter((x) => norm(x.scnsNm).includes("IMAX"));
+    if (imaxAll.length > 0) {
+      console.log(`[IMAX] 상영관=${JSON.stringify([...new Set(imaxAll.map(x=>x.scnsNm))])} ` +
+                  `등급코드=${JSON.stringify([...new Set(imaxAll.map(x=>x.tcscnsGradCd))])}`);
+    }
+
+커밋한 뒤 다시 Run workflow(diagnostic_only 체크, 20260819) 하시면 [IMAX] 줄에서 용산 IMAX관의 실제 코드가 나옵니다.
+
+Secrets 등록은 하셨나요? 그게 마지막 관문입니다. 없으면 감시는 돌아도 알림이 안 갑니다.
 
 // ═══════════════════════════════════════════════════════════
 // 알림
