@@ -1,0 +1,12 @@
+{
+  "name": "cgv-yongsan-alert",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CGV 용산아이파크몰 IMAX 예매 오픈 감시 (네트워크 응답 가로채기 방식)",
+  "scripts": {
+    "monitor": "node monitor.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "24.16.0"
+  }
+}
