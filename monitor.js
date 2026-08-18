@@ -236,6 +236,12 @@ async function fetchDate(browser, date) {
     if (items.length > 0) {
       console.log(`[DIAG] ${date}: 샘플=${JSON.stringify(items.slice(0, 5))}`);
       if (DIAGNOSTIC_ONLY) {
+        // ── 발송 테스트: 텔레그램 연결이 실제로 되는지 미리 확인합니다
+        if (String(process.env.TEST_TELEGRAM || "").toLowerCase() === "true") {
+          await sendTelegram("🔔 CGV 감시봇 연결 테스트 - 이 메시지가 보이면 정상입니다.");
+          console.log("텔레그램 테스트 발송 완료");
+          return;
+        }
         // 진단 모드에서만 원본 응답을 통째로 찍어 필드명을 확인합니다.
         const raw = Array.isArray(body?.data) ? body.data : [];
         console.log(`[RAW] ${date}: ${JSON.stringify(raw.slice(0, 2), null, 1)}`);
