@@ -222,6 +222,8 @@ async function fetchDate(browser, date) {
     );
     if (items.length > 0) {
       console.log(`[DIAG] ${date}: 샘플=${JSON.stringify(items.slice(0, 5))}`);
+      // 원본 응답의 필드명과 값을 그대로 확인 (IMAX 코드, 시각 필드 파악용)
+      console.log(`[RAW] ${date}: ${JSON.stringify((Array.isArray(body?.data)?body.data:[]).slice(0, 3), null, 1)}`);
     }
 
     return { date, total: items.length, movie, imax, error: null };
