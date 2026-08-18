@@ -91,33 +91,6 @@ function simplify(x) {
   };
 }
 
-② IMAX 판별을 상영관 이름 기준으로 변경
-
-찾을 부분:
-
-javascript
-    const imax = movie.filter((x) => x.tcscnsGradCd === IMAX_GRADE_CODE);
-
-바꿀 내용:
-
-javascript
-    // 등급코드는 극장마다 값이 달라서, 상영관 이름에 IMAX가 들어있는지로 판별합니다.
-    // 이름 기준이 코드 기준보다 오해의 소지가 적습니다.
-    const imax = movie.filter(
-      (x) => norm(x.scnsNm).includes("IMAX") || x.tcscnsGradCd === IMAX_GRADE_CODE
-    );
-
-    // 이 극장에서 IMAX가 어떤 코드를 쓰는지 로그로 확인 (한 번 파악되면 이 줄은 지워도 됩니다)
-    const imaxAll = items.filter((x) => norm(x.scnsNm).includes("IMAX"));
-    if (imaxAll.length > 0) {
-      console.log(`[IMAX] 상영관=${JSON.stringify([...new Set(imaxAll.map(x=>x.scnsNm))])} ` +
-                  `등급코드=${JSON.stringify([...new Set(imaxAll.map(x=>x.tcscnsGradCd))])}`);
-    }
-
-커밋한 뒤 다시 Run workflow(diagnostic_only 체크, 20260819) 하시면 [IMAX] 줄에서 용산 IMAX관의 실제 코드가 나옵니다.
-
-Secrets 등록은 하셨나요? 그게 마지막 관문입니다. 없으면 감시는 돌아도 알림이 안 갑니다.
-
 // ═══════════════════════════════════════════════════════════
 // 알림
 // ═══════════════════════════════════════════════════════════
@@ -243,15 +216,30 @@ async function fetchDate(browser, date) {
     const items = (Array.isArray(body?.data) ? body.data : []).map(simplify);
 
     const movie = items.filter((x) => isTargetMovie(x.movNm));
-    const imax = movie.filter((x) => x.tcscnsGradCd === IMAX_GRADE_CODE);
+    // 등급코드는 극장마다 값이 다를 수 있어 상영관 이름을 우선 기준으로 삼습니다.
+    const imax = movie.filter(
+      (x) => norm(x.scnsNm).includes("IMAX") || x.tcscnsGradCd === IMAX_GRADE_CODE
+    );
+
+    // 이 극장의 IMAX관이 어떤 코드를 쓰는지 로그로 남깁니다.
+    const imaxAll = items.filter((x) => norm(x.scnsNm).includes("IMAX"));
+    if (imaxAll.length > 0) {
+      console.log(
+        `[IMAX] 상영관=${JSON.stringify([...new Set(imaxAll.map((x) => x.scnsNm))])} ` +
+          `등급코드=${JSON.stringify([...new Set(imaxAll.map((x) => x.tcscnsGradCd))])}`
+      );
+    }
 
     console.log(
       `[DIAG] ${date}: 전체=${items.length} 대상영화=${movie.length} IMAX=${imax.length}`
     );
     if (items.length > 0) {
       console.log(`[DIAG] ${date}: 샘플=${JSON.stringify(items.slice(0, 5))}`);
-      // 원본 응답의 필드명과 값을 그대로 확인 (IMAX 코드, 시각 필드 파악용)
-      console.log(`[RAW] ${date}: ${JSON.stringify((Array.isArray(body?.data)?body.data:[]).slice(0, 3), null, 1)}`);
+      if (DIAGNOSTIC_ONLY) {
+        // 진단 모드에서만 원본 응답을 통째로 찍어 필드명을 확인합니다.
+        const raw = Array.isArray(body?.data) ? body.data : [];
+        console.log(`[RAW] ${date}: ${JSON.stringify(raw.slice(0, 2), null, 1)}`);
+      }
     }
 
     return { date, total: items.length, movie, imax, error: null };
