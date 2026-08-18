@@ -11,9 +11,13 @@ on:
         type: boolean
         default: true
       diagnostic_date:
-        description: "진단할 날짜 - 이미 예매가 열린 날 (YYYYMMDD)"
+        description: "진단할 날짜 - 이미 예매가 열린 날 (YYYYMMDD). 비우면 내일 날짜"
         type: string
         default: ""
+      test_telegram:
+        description: "텔레그램 발송 테스트만 실행 (CGV 조회 안 함)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -57,4 +61,5 @@ jobs:
           HEARTBEAT: ${{ github.event.schedule == '10 23 * * *' }}
           DIAGNOSTIC_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnostic_only || 'false' }}
           DIAGNOSTIC_DATE: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnostic_date || '' }}
+          TEST_TELEGRAM: ${{ github.event_name == 'workflow_dispatch' && inputs.test_telegram || 'false' }}
         run: node monitor.js
